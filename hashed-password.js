@@ -11,66 +11,99 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 */
 
-/**
- * Hashed Password
- * Combination of page URI and plaintext password.
- * Treated as a string, it is the hashed password.
+/*
+ * Bcrypt adaptation by Daniel Hjort.
+ * Requires the Javascript bCrypt implementation from https://code.google.com/p/javascript-bcrypt/
  */
 
-function SPH_HashedPassword(password, realm) {
-  var hashedPassword = this._getHashedPassword(password, realm);
-  this.toString = function() { return hashedPassword; }
+var bcrypt;
+var doneCallback;
+var newSalt;
+var userPassword;
+
+/**
+ * Call to get gashed password and salt in callback
+ */
+function SPH_HashedPassword(password, realm, salt, rounds, bcrypt, callback) {
+	userPassword = password;
+	doneCallback = callback;
+	bcrypt = bcrypt;
+	crypt(realm.concat(password), salt, rounds);
 }
 
 var SPH_kPasswordPrefix = "@@";
 
-SPH_HashedPassword.prototype = {
+/**
+ * Fiddle with the password a bit after hashing it so that it will get through
+ * most website filters. We require one upper and lower case, one digit, and
+ * we look at the user's password to determine if there should be at least one 
+ * alphanumeric or not.
+ */
+function applyConstraints(hash, size, nonalphanumeric) {
 
-  /**
-   * Determine the hashed password from the salt and the master password
-   */
-  _getHashedPassword: function(password, realm) {
-    var hash = b64_hmac_md5(password, realm);
-    var size = password.length + SPH_kPasswordPrefix.length;
-    var nonalphanumeric = password.match(/\W/) != null;
-    var result = this._applyConstraints(hash, size, nonalphanumeric);
-    return result;
-  },
+	var startingSize = size - 4;  // Leave room for some extra characters
+	var result = hash.substring(0, startingSize);
+	var extras = hash.substring(startingSize).split('');
 
-  /**
-   * Fiddle with the password a bit after hashing it so that it will get through
-   * most website filters. We require one upper and lower case, one digit, and
-   * we look at the user's password to determine if there should be at least one 
-   * alphanumeric or not.
-   */
-  _applyConstraints: function(hash, size, nonalphanumeric) {
-    var startingSize = size - 4;  // Leave room for some extra characters
-    var result = hash.substring(0, startingSize);
-    var extras = hash.substring(startingSize).split('');
+	// Some utility functions to keep things tidy
+	function nextExtra() { return extras.length ? extras.shift().charCodeAt(0) : 0; }
+	function nextExtraChar() { return String.fromCharCode(nextExtra()); }
+	function rotate(arr, amount) { while(amount--) arr.push(arr.shift()) }
+	function between(min, interval, offset) { return min + offset % interval; }
+	function nextBetween(base, interval) { 
+		return String.fromCharCode(between(base.charCodeAt(0), interval, nextExtra()));
+	}
+	function contains(regex) { return result.match(regex); }
 
-    // Some utility functions to keep things tidy
-    function nextExtra() { return extras.length ? extras.shift().charCodeAt(0) : 0; }
-    function nextExtraChar() { return String.fromCharCode(nextExtra()); }
-    function rotate(arr, amount) { while(amount--) arr.push(arr.shift()) }
-    function between(min, interval, offset) { return min + offset % interval; }
-    function nextBetween(base, interval) { 
-      return String.fromCharCode(between(base.charCodeAt(0), interval, nextExtra()));
-    }
-    function contains(regex) { return result.match(regex); }
+	// Add the extra characters
+	result += (contains(/[A-Z]/) ? nextExtraChar() : nextBetween('A', 26));
+	result += (contains(/[a-z]/) ? nextExtraChar() : nextBetween('a', 26));
+	result += (contains(/[0-9]/) ? nextExtraChar() : nextBetween('0', 10));
+	result += (contains(/\W/) && nonalphanumeric ? nextExtraChar() : '+');
+	while (contains(/\W/) && !nonalphanumeric) {
+		result = result.replace(/\W/, nextBetween('A', 26));
+	}
 
-    // Add the extra characters
-    result += (contains(/[A-Z]/) ? nextExtraChar() : nextBetween('A', 26));
-    result += (contains(/[a-z]/) ? nextExtraChar() : nextBetween('a', 26));
-    result += (contains(/[0-9]/) ? nextExtraChar() : nextBetween('0', 10));
-    result += (contains(/\W/) && nonalphanumeric ? nextExtraChar() : '+');
-    while (contains(/\W/) && !nonalphanumeric) {
-      result = result.replace(/\W/, nextBetween('A', 26));
-    }
-
-    // Rotate the result to make it harder to guess the inserted locations
-    result = result.split('');
-    rotate(result, nextExtra());
-    return result.join('');
-  }
+	// Rotate the result to make it harder to guess the inserted locations
+	result = result.split('');
+	rotate(result, nextExtra());
+	return result.join('');
 }
+
+/**
+ * Callback from Bcrypt.
+ */
+function result(hash)
+{
+	var size = userPassword.length + SPH_kPasswordPrefix.length;
+	var nonalphanumeric = userPassword.match(/\W/) != null;
+	var result = applyConstraints(hash.replace(newSalt, ""), size, nonalphanumeric);
+	doneCallback(result, newSalt);
+}
+
+/**
+ * Use Bcrypt to determine the hashed password from the salt and the master password
+ */
+function crypt(password, salt, rounds)
+{
+	if(salt.length == 0){
+		try {
+		salt = bcrypt.gensalt(rounds);
+		} catch(err) {
+			alert(err);
+			return;
+		}
+	}
+	newSalt = salt;
+	try {
+		bcrypt.hashpw(password, salt, result, function() {});
+	} catch(err) {
+		alert(err);
+		return;
+	}
+}
+
+
+
+
 
