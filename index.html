@@ -1,0 +1,120 @@
+<html>
+<head>
+<!--* Remote PwdHash Form
+      * An HTML form that calls the JavaScript implementation of PwdHash
+      * Version 1.0 Copyright (C) Stanford University 2004-2005
+      * Contributors: Dan Boneh, Collin Jackson, John Mitchell, Nick Miyake, and Blake Ross
+      * Bcrypt & jQuery adaptation: Daniel Hjort
+      * Distributed under the BSD License
+      * See http://crypto.stanford.edu/PwdHash for more info.
+      *
+      * bCrypt implementation from https://code.google.com/p/javascript-bcrypt/
+      *
+      *-->
+  <title>BcryptPwdHash</title>
+  <script src="MochiKit/MochiKit.js" type="text/javascript"></script>
+  <script src="Clipperz/Base.js" type="text/javascript"></script>
+  <script src="Clipperz/ByteArray.js" type="text/javascript"></script>
+  <script src="Clipperz/Crypto/BigInt.js" type="text/javascript"></script>
+  <script src="Clipperz/Crypto/SHA.js" type="text/javascript"></script>
+  <script src="Clipperz/Crypto/AES.js" type="text/javascript"></script>
+  <script src="Clipperz/Crypto/PRNG.js" type="text/javascript"></script>
+  <script src="bCrypt.js" type="text/javascript"></script>
+  <script src="pwdhash.js" type="text/javascript"></script>
+  <script src="hashed-password.js" type="text/javascript"></script>
+  <script src="domain-extractor.js" type="text/javascript"></script>
+  <script src="jquery-1.8.0.min.js" type="text/javascript"></script>
+  <!--<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>-->
+  <script type="text/javascript">
+     var $j = jQuery.noConflict();
+     
+     // Use jQuery via $j(...)
+     $j(document).ready(function(){
+ 	bcrypt = new bCrypt();
+	interval = setInterval(enable,250);
+	initPage();
+     });
+  </script>
+  <link rel="stylesheet" type="text/css" href="pwdhash.css" />
+  <link rel="shortcut icon" href="favicon.ico" />
+</head>
+
+<body>
+
+<!--*
+ * Form
+ *-->
+<table align=right style="margin: 3em 1em 1em 1em"><tr><td>
+<table id="theHashForm"><tr>
+<td class="stepList">
+<div class="step" id="theSiteDomain">
+<h3>Site Address</h3>
+<p><input size=30 type="text" name="domain" id="domain"></p>
+</div>
+<div class="step" id="theSitePassword">
+<h3>Site Password</h3>
+<p><input size=30 type="password" name="sitePassword" id="password"></p>
+</div>
+<div class="step" id="theSalt">
+<h3>Salt (empty to generate)</h3>
+<p><input size=30 type="text" name="salt" id="salt"></p>
+</div>
+<div class="step">
+<h3>Rounds</h3>
+<select id="rounds" name="rounds">
+  <option value=5>5</option>
+  <option value=6>6</option>
+  <option value=7>7</option>
+  <option value=8>8</option>
+  <option value=9>9</option>
+  <option value=10>10</option>
+  <option value=11>11</option>
+  <option value=12>12</option>
+</select>
+</div>
+</td>
+</tr>
+<tr>
+<td class="stepList" colspan="2">
+<div class="step" id="theHashedPassword">
+<h3>Hashed Password</h3>	
+  <span id="theGeneratePanel">
+    <input type="text" name="hashedPassword" id="hash" disabled="true">
+    <input type="submit" name"submitButton" value="Generate" id="submit" disabled="true" onClick="generate()">
+  </span>
+</div>
+</td>
+</tr>
+</table>
+</td></tr><tr><td><div class="footer">Tip: You can save this page to disk.</div>
+</td></tr></table>
+
+<!--*
+ * Static part
+ *-->
+<H1 align=center><font color="#0000FF" face="Arial">Bcrypt PwdHash</font></H1>
+<div id="theexplanation">
+<p>
+Modified version of the Stanford PwdHash. The <a href="https://www.pwdhash.com">original</a> PwdHash generates theft-resistant passwords but uses a weak hashing method. This is the same thing but using the stronger <a href="https://en.wikipedia.org/wiki/Bcrypt">Bcrypt</a> hashing. It requires you to keep a randomly generated salt to retrive your hashed password later.
+<ul>
+<li>Read why this is <a href="http://arstechnica.com/security/2012/08/passwords-under-assault/">important</a>.</li> 
+<li>Visit the original <a href="http://crypto.stanford.edu/PwdHash/">Stanford project website</a>.</li>
+<li>Read the <a href="http://crypto.stanford.edu/PwdHash/pwdhash.pdf">USENIX Security Symposium 2005 paper</a> (PDF).</li>
+<li>Read the <a href="http://static.usenix.org/event/usenix99/provos/provos.pdf">USENIX 1999 paper on Bcrypt</a> (PDF).</li>
+<li>Get the <a href="https://github.com/daijo/BcryptPwdHash">code</a>.</li>
+</ul>
+</div>
+
+<div style="text-align: center">
+ Original contributors: <a href="http://www.blakeross.com/">Blake Ross</a>,
+    <a href="http://www.collinjackson.com/">Collin Jackson</a>,
+      Nicholas Miyake,
+        <A href="http://crypto.stanford.edu/~dabo/">Dan Boneh</A> and <A 
+	  href="http://theory.stanford.edu/people/jcm/home.html">John C. 
+	    Mitchell</A>
+</div>
+<div style="text-align: center"> Bcrypt PwdHash by: <a href="http://www.danielhjort.net/">Daniel Hjort</a>
+</div>
+
+</body>
+</html>
