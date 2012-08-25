@@ -18,43 +18,36 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 var bcrypt;
 var doneCallback;
+var newSalt;
+var userPassword;
 
 /**
- * Hashed Password
- * Combination of page URI and plaintext password.
- * Treated as a string, it is the hashed password.
+ * Call to get gashed password and salt in callback
  */
-
 function SPH_HashedPassword(password, realm, salt, rounds, bcrypt, callback) {
+	userPassword = password;
 	doneCallback = callback;
 	bcrypt = bcrypt;
-	//this._getHashedPassword(password, realm, salt, rounds);
 	crypt(realm.concat(password), salt, rounds);
-  //this.toString = function() { return hashedPassword; }
 }
 
 var SPH_kPasswordPrefix = "@@";
 
 SPH_HashedPassword.prototype = {
 
-  /**
-   * Determine the hashed password from the salt and the master password
-   */
-  /*_getHashedPassword: function(password, realm, salt, rounds) {
-    //var hash = b64_hmac_md5(password, realm);
-    crypt(realm.concat(password), salt, rounds);
-  },*/
 
-  /**
-   * Fiddle with the password a bit after hashing it so that it will get through
-   * most website filters. We require one upper and lower case, one digit, and
-   * we look at the user's password to determine if there should be at least one 
-   * alphanumeric or not.
-   */
-  _applyConstraints: function(hash, size, nonalphanumeric) {
-    var startingSize = size - 4;  // Leave room for some extra characters
-    var result = hash.substring(0, startingSize);
-    var extras = hash.substring(startingSize).split('');
+}
+
+	/**
+	* Fiddle with the password a bit after hashing it so that it will get through
+	* most website filters. We require one upper and lower case, one digit, and
+	* we look at the user's password to determine if there should be at least one 
+	* alphanumeric or not.
+	*/
+function applyConstraints(hash, size, nonalphanumeric) {
+	var startingSize = size - 4;  // Leave room for some extra characters
+	var result = hash.substring(0, startingSize);
+	var extras = hash.substring(startingSize).split('');
 
     // Some utility functions to keep things tidy
     function nextExtra() { return extras.length ? extras.shift().charCodeAt(0) : 0; }
@@ -80,17 +73,21 @@ SPH_HashedPassword.prototype = {
     rotate(result, nextExtra());
     return result.join('');
   }
-}
 
+/**
+ * Callback from Bcrypt.
+ */
 function result(hash)
 {
-	var size = password.length + SPH_kPasswordPrefix.length;
-	var salt = hash;
-	//var nonalphanumeric = password.match(/\W/) != null;
-	//var result = this._applyConstraints(hash, size, nonalphanumeric);
-	doneCallback(hash, salt);
+	var size = userPassword.length + SPH_kPasswordPrefix.length;
+	var nonalphanumeric = userPassword.match(/\W/) != null;
+	var result = applyConstraints(hash.replace(newSalt, ""), size, nonalphanumeric);
+	doneCallback(result, newSalt);
 }
 
+/**
+ * Use Bcrypt to determine the hashed password from the salt and the master password
+ */
 function crypt(password, salt, rounds)
 {
 	if(salt.length == 0){
@@ -101,12 +98,13 @@ function crypt(password, salt, rounds)
 			return;
 		}
 	}
-        try {
+	newSalt = salt;
+	try {
 		bcrypt.hashpw(password, salt, result, function() {});
 	} catch(err) {
 		alert(err);
 		return;
-        }
+	}
 }
 
 
