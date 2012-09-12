@@ -11,7 +11,7 @@
  */
 
 
-var SPH_kPasswordPrefix = "@@";
+var SPH_kPasswordPrefix = "##";
 
 /*
  * Initialize page with default hashing parameters.

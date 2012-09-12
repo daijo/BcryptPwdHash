@@ -31,7 +31,7 @@ function SPH_HashedPassword(password, realm, salt, rounds, bcrypt, callback) {
 	crypt(realm.concat(password), salt, rounds);
 }
 
-var SPH_kPasswordPrefix = "@@";
+var SPH_kPasswordPrefix = "##";
 
 /**
  * Fiddle with the password a bit after hashing it so that it will get through
