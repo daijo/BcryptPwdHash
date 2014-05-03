@@ -41,7 +41,7 @@ var SPH_kPasswordPrefix = "##";
  */
 function applyConstraints(hash, size, nonalphanumeric) {
 
-	var startingSize = size - 4;  // Leave room for some extra characters
+	var startingSize = size - 3;  // Leave room for some extra characters
 	var result = hash.substring(0, startingSize);
 	var extras = hash.substring(startingSize).split('');
 
@@ -59,7 +59,6 @@ function applyConstraints(hash, size, nonalphanumeric) {
 	result += (contains(/[A-Z]/) ? nextExtraChar() : nextBetween('A', 26));
 	result += (contains(/[a-z]/) ? nextExtraChar() : nextBetween('a', 26));
 	result += (contains(/[0-9]/) ? nextExtraChar() : nextBetween('0', 10));
-	result += (contains(/\W/) && nonalphanumeric ? nextExtraChar() : '+');
 	while (contains(/\W/) && !nonalphanumeric) {
 		result = result.replace(/\W/, nextBetween('A', 26));
 	}
